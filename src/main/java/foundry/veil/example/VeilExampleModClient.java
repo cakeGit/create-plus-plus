@@ -1,5 +1,6 @@
 package foundry.veil.example;
 
+import com.mojang.blaze3d.platform.Window;
 import foundry.veil.api.client.render.VeilLevelPerspectiveRenderer;
 import foundry.veil.api.client.render.VeilRenderBridge;
 import foundry.veil.api.client.render.VeilRenderSystem;
@@ -23,10 +24,19 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.phys.Vec3;
+import org.joml.*;
+
+import java.lang.Math;
 
 public class VeilExampleModClient implements ClientModInitializer {
     
     private static final ResourceLocation TEST_FBO = VeilExampleMod.path("test");
+    
+    private static final Matrix4f RENDER_MODELVIEW = new Matrix4f();
+    private static final Matrix4f RENDER_PROJECTION = new Matrix4f();
+    private static final Quaternionf VIEW = new Quaternionf();
+    
     @Override
     public void onInitializeClient() {
         BuiltinItemRendererRegistry.INSTANCE.register(
@@ -48,7 +58,15 @@ public class VeilExampleModClient implements ClientModInitializer {
                 if (VeilLevelPerspectiveRenderer.isRenderingPerspective()) {
                     return;
                 }
-                VeilLevelPerspectiveRenderer.render(fbo, RENDER_MODELVIEW, RENDER_PROJECTION, renderPos, VIEW.identity().lookAlong(dir, up), RENDER_DISTANCE, partialTicks);
+                Window window = Minecraft.getInstance().getWindow();
+                float aspect = (float) window.getWidth() / window.getHeight();
+                float fov = projectionMatrix.perspectiveFov();
+                
+                Vector3f dir = camera.getLookVector();
+                Vector3f up = camera.getUpVector();
+                
+                RENDER_PROJECTION.setPerspective(fov, aspect, 0.3F, 128 * 4);
+                VeilLevelPerspectiveRenderer.render(fbo, RENDER_MODELVIEW, RENDER_PROJECTION, new Vector3d(0, 0, 0), VIEW.identity().lookAlong(dir, up), 64, partialTicks);
                 
             }
         });
