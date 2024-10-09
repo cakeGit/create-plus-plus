@@ -46,6 +46,7 @@ public class VeilExampleModClient implements ClientModInitializer {
         BlockEntityRenderers.register(VeilExampleBlocks.PROJECTOR_BE, ProjectorBlockEntityRenderer::new);
         FabricVeilRendererEvent.EVENT.register(renderer -> {
             renderer.getEditorManager().add(new VeilExampleModEditor());
+            //TODO remove when manually activating
             renderer.getPostProcessingManager().add(VeilExampleMod.path("projector"));
         });
 
@@ -55,6 +56,7 @@ public class VeilExampleModClient implements ClientModInitializer {
                 
                 FramebufferManager framebufferManager = VeilRenderSystem.renderer().getFramebufferManager();
                 AdvancedFbo fbo = framebufferManager.getFramebuffer(TEST_FBO);
+                
                 if (VeilLevelPerspectiveRenderer.isRenderingPerspective()) {
                     return;
                 }
@@ -62,14 +64,21 @@ public class VeilExampleModClient implements ClientModInitializer {
                 float aspect = (float) window.getWidth() / window.getHeight();
                 float fov = projectionMatrix.perspectiveFov();
                 
-                Vector3f dir = camera.getLookVector();
-                Vector3f up = camera.getUpVector();
+                
+                
+                Vector3f dir = new Vector3f(0f, -1f, 0f);
+                Vector3f up = new Vector3f(0f, 0f, 1f);
                 
                 RENDER_PROJECTION.setPerspective(fov, aspect, 0.3F, 128 * 4);
                 VeilLevelPerspectiveRenderer.render(fbo, RENDER_MODELVIEW, RENDER_PROJECTION, new Vector3d(0, 0, 0), VIEW.identity().lookAlong(dir, up), 64, partialTicks);
                 
             }
         });
+        
+        //TODO
+        // ok so from what i can see
+        // you gotta call the post processor for each one after generating its depthmap by directly invoking the postprocessing manager, ignoring the default pipeline system,
+        // then copy the results buffer by running a finalise processor
         
         VeilEventPlatform.INSTANCE.preVeilPostProcessing(((name, pipeline, context) -> {
             if (!name.equals(VeilExampleMod.path("projector"))) return;
