@@ -14,8 +14,6 @@ layout(std140) uniform CameraMatrices {
 
 in vec2 texCoord;
 
-uniform float seteone;
-
 uniform vec3 origin;
 uniform vec3 direction;
 
