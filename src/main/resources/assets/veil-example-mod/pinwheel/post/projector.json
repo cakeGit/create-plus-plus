@@ -2,7 +2,7 @@
   "framebuffers": {
     "temp": {
       "depth": true,
-      "format": "RGBA16F"
+      "format": "RGB8"
     }
   },
   "stages": [

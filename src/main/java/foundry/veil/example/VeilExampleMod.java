@@ -30,6 +30,6 @@ public class VeilExampleMod implements ModInitializer {
     public void onInitialize() {
         VeilExampleItems.bootstrap();
         VeilExampleBlocks.bootstrap();
-        Registry.register(BuiltInRegistries.CREATIVE_MODE_TAB, ITEM_GROUP, FabricItemGroup.builder().title(Component.translatable(MODID + ".items")).icon(() -> new ItemStack(VeilExampleBlocks.MAP)).displayItems(VeilExampleItems::fillTab).build());
+        Registry.register(BuiltInRegistries.CREATIVE_MODE_TAB, ITEM_GROUP, FabricItemGroup.builder().title(Component.translatable(MODID + ".items")).displayItems(VeilExampleItems::fillTab).build());
     }
 }

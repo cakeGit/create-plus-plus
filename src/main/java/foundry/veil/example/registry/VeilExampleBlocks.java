@@ -1,11 +1,7 @@
 package foundry.veil.example.registry;
 
 import foundry.veil.example.VeilExampleMod;
-import foundry.veil.example.block.MapBlock;
-import foundry.veil.example.block.MirrorBlock;
 import foundry.veil.example.block.ProjectorBlock;
-import foundry.veil.example.blockentity.MapBlockEntity;
-import foundry.veil.example.blockentity.MirrorBlockEntity;
 import foundry.veil.example.blockentity.ProjectorBlockEntity;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -18,22 +14,10 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 
 public class VeilExampleBlocks {
 
-    public static final Block MAP = register("map", new MapBlock(BlockBehaviour.Properties.copy(Blocks.BEDROCK)
-                    .noOcclusion()
-                    .isRedstoneConductor(Blocks::never)
-                    .isSuffocating(Blocks::never)),
-            new Item.Properties());
-    public static final Block MIRROR = register("mirror", new MirrorBlock(BlockBehaviour.Properties.copy(Blocks.BEDROCK)
-                    .noOcclusion()
-                    .isRedstoneConductor(Blocks::never)
-                    .isSuffocating(Blocks::never)),
-            new Item.Properties());
     public static final Block PROJECTOR = register("projector", new ProjectorBlock(BlockBehaviour.Properties.copy(Blocks.BEDROCK)
             .noOcclusion()
             .isRedstoneConductor(Blocks::never)),
         new Item.Properties());
-    public static final BlockEntityType<MapBlockEntity> MAP_BE = Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE, VeilExampleMod.path("map"), BlockEntityType.Builder.of(MapBlockEntity::new, MAP).build(null));
-    public static final BlockEntityType<MirrorBlockEntity> MIRROR_BE = Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE, VeilExampleMod.path("mirror"), BlockEntityType.Builder.of(MirrorBlockEntity::new, MIRROR).build(null));
     public static final BlockEntityType<ProjectorBlockEntity> PROJECTOR_BE = Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE, VeilExampleMod.path("projector"), BlockEntityType.Builder.of(ProjectorBlockEntity::new, PROJECTOR).build(null));
 
     public static void bootstrap() {
