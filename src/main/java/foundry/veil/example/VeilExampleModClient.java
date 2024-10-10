@@ -32,10 +32,10 @@ import java.lang.Math;
 public class VeilExampleModClient implements ClientModInitializer {
     
     private static final ResourceLocation TEST_FBO = VeilExampleMod.path("test");
-    
-    private static final Matrix4f RENDER_MODELVIEW = new Matrix4f();
-    private static final Matrix4f RENDER_PROJECTION = new Matrix4f();
-    private static final Quaternionf VIEW = new Quaternionf();
+//
+//    private static final Matrix4f RENDER_MODELVIEW = new Matrix4f();
+//    private static final Matrix4f RENDER_PROJECTION = new Matrix4f();
+//    private static final Quaternionf VIEW = new Quaternionf();
     
     @Override
     public void onInitializeClient() {
@@ -43,34 +43,34 @@ public class VeilExampleModClient implements ClientModInitializer {
             VeilExampleBlocks.MAP, new SimpleBlockItemRenderer(new MapBlockEntity(BlockPos.ZERO, VeilExampleBlocks.MAP.defaultBlockState())));
         BlockEntityRenderers.register(VeilExampleBlocks.MAP_BE, MapBlockEntityRenderer::new);
         BlockEntityRenderers.register(VeilExampleBlocks.MIRROR_BE, MirrorBlockEntityRenderer::new);
-        BlockEntityRenderers.register(VeilExampleBlocks.PROJECTOR_BE, ProjectorBlockEntityRenderer::new);
+//        BlockEntityRenderers.register(VeilExampleBlocks.PROJECTOR_BE, ProjectorBlockEntityRenderer::new);
         FabricVeilRendererEvent.EVENT.register(renderer -> {
             renderer.getEditorManager().add(new VeilExampleModEditor());
             //TODO remove when manually activating
-            renderer.getPostProcessingManager().add(VeilExampleMod.path("projector"));
+//            renderer.getPostProcessingManager().add(VeilExampleMod.path("projector"));
         });
 
         FabricVeilRenderLevelStageEvent.EVENT.register((stage, levelRenderer, bufferSource, poseStack, projectionMatrix, renderTick, partialTicks, camera, frustum) -> {
             if (stage == VeilRenderLevelStageEvent.Stage.AFTER_LEVEL) {
                 MirrorBlockEntityRenderer.renderLevel(Minecraft.getInstance().level, projectionMatrix, partialTicks, VeilRenderBridge.create(frustum), camera);
                 
-                FramebufferManager framebufferManager = VeilRenderSystem.renderer().getFramebufferManager();
-                AdvancedFbo fbo = framebufferManager.getFramebuffer(TEST_FBO);
-
-                if (VeilLevelPerspectiveRenderer.isRenderingPerspective()) {
-                    return;
-                }
-                Window window = Minecraft.getInstance().getWindow();
-                float aspect = (float) window.getWidth() / window.getHeight();
-                float fov = projectionMatrix.perspectiveFov();
-
-
-
-                Vector3f dir = new Vector3f(0f, -1f, 0f);
-                Vector3f up = new Vector3f(0f, 0f, 1f);
-
-                RENDER_PROJECTION.setPerspective(fov, aspect, 0.3F, 128 * 4);
-                VeilLevelPerspectiveRenderer.render(fbo, RENDER_MODELVIEW, RENDER_PROJECTION, new Vector3d(0, 0, 0), VIEW.identity().lookAlong(dir, up), 64, partialTicks);
+                
+//                FramebufferManager framebufferManager = VeilRenderSystem.renderer().getFramebufferManager();
+//                AdvancedFbo fbo = framebufferManager.getFramebuffer(TEST_FBO);
+//
+//                if (fbo == null) return;
+//
+//                Window window = Minecraft.getInstance().getWindow();
+//                float aspect = (float) window.getWidth() / window.getHeight();
+//                float fov = projectionMatrix.perspectiveFov();
+//
+//
+//
+//                Vector3f dir = new Vector3f(0f, -1f, 0f);
+//                Vector3f up = new Vector3f(0f, 0f, 1f);
+//
+//                RENDER_PROJECTION.setPerspective(fov, aspect, 0.3F, 128 * 4);
+//                VeilLevelPerspectiveRenderer.render(fbo, RENDER_MODELVIEW, RENDER_PROJECTION, new Vector3d(0, 0, 0), VIEW.identity().lookAlong(dir, up), 64, partialTicks);
 
             }
         });
@@ -79,14 +79,13 @@ public class VeilExampleModClient implements ClientModInitializer {
         // ok so from what i can see
         // you gotta call the post processor for each one after generating its depthmap by directly invoking the postprocessing manager, ignoring the default pipeline system,
         // then copy the results buffer by running a finalise processor
-        // IDFK ATP
         
-        VeilEventPlatform.INSTANCE.preVeilPostProcessing(((name, pipeline, context) -> {
-            if (!name.equals(VeilExampleMod.path("projector"))) return;
-            ShaderProgram program = context.getShader(VeilExampleMod.path("projector"));
-            if (program == null) return;
-            program.setVector("origin", 0f, 0f, 0f);
-            program.setVector("direction", 0f, -1f, 0f);
-        }));
+//        VeilEventPlatform.INSTANCE.preVeilPostProcessing(((name, pipeline, context) -> {
+//            if (!name.equals(VeilExampleMod.path("projector"))) return;
+//            ShaderProgram program = context.getShader(VeilExampleMod.path("projector"));
+//            if (program == null) return;
+//            program.setVector("origin", 0f, 0f, 0f);
+//            program.setVector("direction", 0f, -1f, 0f);
+//        }));
     }
 }
