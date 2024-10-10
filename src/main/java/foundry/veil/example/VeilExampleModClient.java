@@ -79,6 +79,7 @@ public class VeilExampleModClient implements ClientModInitializer {
         // ok so from what i can see
         // you gotta call the post processor for each one after generating its depthmap by directly invoking the postprocessing manager, ignoring the default pipeline system,
         // then copy the results buffer by running a finalise processor
+        // IDFK ATP
         
         VeilEventPlatform.INSTANCE.preVeilPostProcessing(((name, pipeline, context) -> {
             if (!name.equals(VeilExampleMod.path("projector"))) return;
