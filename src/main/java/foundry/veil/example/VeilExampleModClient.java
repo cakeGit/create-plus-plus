@@ -56,22 +56,22 @@ public class VeilExampleModClient implements ClientModInitializer {
                 
                 FramebufferManager framebufferManager = VeilRenderSystem.renderer().getFramebufferManager();
                 AdvancedFbo fbo = framebufferManager.getFramebuffer(TEST_FBO);
-                
+
                 if (VeilLevelPerspectiveRenderer.isRenderingPerspective()) {
                     return;
                 }
                 Window window = Minecraft.getInstance().getWindow();
                 float aspect = (float) window.getWidth() / window.getHeight();
                 float fov = projectionMatrix.perspectiveFov();
-                
-                
-                
+
+
+
                 Vector3f dir = new Vector3f(0f, -1f, 0f);
                 Vector3f up = new Vector3f(0f, 0f, 1f);
-                
+
                 RENDER_PROJECTION.setPerspective(fov, aspect, 0.3F, 128 * 4);
                 VeilLevelPerspectiveRenderer.render(fbo, RENDER_MODELVIEW, RENDER_PROJECTION, new Vector3d(0, 0, 0), VIEW.identity().lookAlong(dir, up), 64, partialTicks);
-                
+
             }
         });
         
