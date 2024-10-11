@@ -1,0 +1,23 @@
+{
+  "framebuffers": {
+    "temp": {
+      "depth": true,
+      "format": "RGB8"
+    }
+  },
+  "stages": [
+    {
+      "type": "veil:copy",
+      "in": "veil:post",
+      "out": "temp",
+      "depth": true
+    },
+    {
+      "type": "veil:blit",
+      "shader": "veil-example-mod:projector_flare",
+      "in": "temp",
+      "out": "veil:post"
+    }
+  ],
+  "priority": 1010
+}

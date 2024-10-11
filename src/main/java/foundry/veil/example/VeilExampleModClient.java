@@ -39,16 +39,20 @@ public class VeilExampleModClient implements ClientModInitializer {
     
     private static ProjectorTexture PROJECTOR_TEXTURE;
     
+    private static Matrix4f lastProj = new Matrix4f();
+    
     @Override
     public void onInitializeClient() {
 //        BlockEntityRenderers.register(VeilExampleBlocks.PROJECTOR_BE, ProjectorBlockEntityRenderer::new);
         FabricVeilRendererEvent.EVENT.register(renderer -> {
             renderer.getEditorManager().add(new VeilExampleModEditor());
             VeilRenderSystem.renderer().getPostProcessingManager().add(VeilExampleMod.path("projector"));
+            VeilRenderSystem.renderer().getPostProcessingManager().add(VeilExampleMod.path("projector_flare"));
             PROJECTOR_TEXTURE = new ProjectorTexture();
         });
         
         FabricVeilRenderLevelStageEvent.EVENT.register((stage, levelRenderer, bufferSource, poseStack, projectionMatrix, renderTick, partialTicks, camera, frustum) -> {
+            lastProj = projectionMatrix;
             if (stage == VeilRenderLevelStageEvent.Stage.AFTER_LEVEL) {
             
             }
@@ -69,17 +73,33 @@ public class VeilExampleModClient implements ClientModInitializer {
 
             Vector3f dir = new Vector3f(0f, -1f, 0f);
             Vector3f up = new Vector3f(0f, 0f, 1f);
-            poseStack.mulPoseMatrix(TRANSFORM.set(new Matrix4f()));
+            
+            Matrix4f pose = poseStack.last().pose();
+            poseStack.mulPoseMatrix(RENDER_PROJECTION);
+            pose.normal().mul(TRANSFORM.normal(new Matrix4f()));
             poseStack.mulPose(VIEW.identity().lookAlong(dir, up));
 
-            Matrix4f pose = poseStack.last().pose();
-            program.setMatrix("DepthMatrix", pose);
-            program.setFloat("ProjectorPlaneNear", 0.0f);
-            program.setFloat("ProjectorPlaneFar", 128.0f);
+//            Matrix4f pose = poseStack.last().pose();
+            program.setMatrix("DepthMat", new Matrix4f().setPerspective((float) (Math.PI / 2f), 1f, 0.1F, 64f).rotate(VIEW.identity().lookAlong(dir, up)));
+            program.setMatrix("DepthModelMat", RENDER_MODELVIEW);
+            
+            program.setFloat("ProjectorPlaneNear", 0.1f);
+            program.setFloat("ProjectorPlaneFar", 64f);
 
             program.setVector("projectorOneTexel", 2/1024f, 2/1024f);
             
             program.addSampler("ProjectionDepthSampler", PROJECTOR_TEXTURE.getId());
+        }));
+        
+        
+        VeilEventPlatform.INSTANCE.preVeilPostProcessing(((name, pipeline, context) -> {
+            if (!name.equals(VeilExampleMod.path("projector_flare"))) return;
+            
+            ShaderProgram program = context.getShader(VeilExampleMod.path("projector_flare"));
+            if (program == null) return;
+            program.setVector("origin", new Vector3f(0, 0, 0));
+            Window window = Minecraft.getInstance().getWindow();
+            program.setFloat("aspect", (float) window.getWidth() / window.getHeight());
         }));
     }
     
@@ -109,8 +129,8 @@ public class VeilExampleModClient implements ClientModInitializer {
         Vector3f dir = new Vector3f(0f, -1f, 0f);
         Vector3f up = new Vector3f(0f, 0f, 1f);
         
-//        RENDER_PROJECTION.setPerspective((float) (Math.PI / 2f), 1f, 0.3F, 128 * 4);
-        RENDER_PROJECTION.identity().ortho(-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 128.0f);
+        RENDER_PROJECTION.setPerspective((float) (Math.PI / 2f), 1f, 0.1F, 64f);
+//        RENDER_PROJECTION.identity().ortho(-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 128.0f);
         Vector4f plane = new Vector4f(dir.x(), dir.y(), dir.z(), -dir.dot(dir.x(), dir.y(), dir.z()));
         
         new Quaternionf().lookAlong(dir, up).transform(plane);
