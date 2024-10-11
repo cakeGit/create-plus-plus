@@ -56,24 +56,28 @@ public class VeilExampleModClient implements ClientModInitializer {
         
         VeilEventPlatform.INSTANCE.preVeilPostProcessing(((name, pipeline, context) -> {
             if (!name.equals(VeilExampleMod.path("projector"))) return;
-            
-            
+
             ShaderProgram program = context.getShader(VeilExampleMod.path("projector"));
             if (program == null) return;
             program.setVector("origin", 0f, 0f, 0f);
             program.setVector("direction", 0f, -1f, 0f);
             Window window = Minecraft.getInstance().getWindow();
             program.setFloat("BaseAspect", (float) window.getWidth() / window.getHeight());
-            
-            
+
+
             PoseStack poseStack = new PoseStack();
-            
+
             Vector3f dir = new Vector3f(0f, -1f, 0f);
             Vector3f up = new Vector3f(0f, 0f, 1f);
             poseStack.mulPoseMatrix(TRANSFORM.set(new Matrix4f()));
             poseStack.mulPose(VIEW.identity().lookAlong(dir, up));
-            
-            program.setMatrix("DepthMatrix", poseStack.last().pose());
+
+            Matrix4f pose = poseStack.last().pose();
+            program.setMatrix("DepthMatrix", pose);
+            program.setFloat("ProjectorPlaneNear", 0.0f);
+            program.setFloat("ProjectorPlaneFar", 128.0f);
+
+            program.setVector("projectorOneTexel", 2/1024f, 2/1024f);
             
             program.addSampler("ProjectionDepthSampler", PROJECTOR_TEXTURE.getId());
         }));
@@ -108,7 +112,6 @@ public class VeilExampleModClient implements ClientModInitializer {
 //        RENDER_PROJECTION.setPerspective((float) (Math.PI / 2f), 1f, 0.3F, 128 * 4);
         RENDER_PROJECTION.identity().ortho(-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 128.0f);
         Vector4f plane = new Vector4f(dir.x(), dir.y(), dir.z(), -dir.dot(dir.x(), dir.y(), dir.z()));
-        
         
         new Quaternionf().lookAlong(dir, up).transform(plane);
 //        calculateObliqueMatrix(RENDER_PROJECTION, plane, RENDER_PROJECTION);
