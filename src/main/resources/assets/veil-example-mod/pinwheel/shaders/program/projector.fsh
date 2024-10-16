@@ -4,6 +4,7 @@ uniform sampler2D DiffuseSampler0;
 uniform sampler2D DiffuseDepthSampler;
 
 uniform sampler2D ProjectionDepthSampler;
+uniform sampler2D ProjectionResults;
 
 in vec2 texCoord;
 
@@ -22,9 +23,9 @@ uniform mat4 DepthModelMat;
 uniform vec2 projectorOneTexel;
 
 out vec4 fragColor;
-//TODO Remove fpe clip
+
 bool isInProjectionSpace(vec2 projectorSpace) {
-    return (projectorSpace.x > 0.0f && projectorSpace.y > 0.0f && projectorSpace.x < 1.0f && projectorSpace.y < 1.0f);
+    return (projectorSpace.x > 0.005f && projectorSpace.y > 0.005f && projectorSpace.x < 0.995f && projectorSpace.y < 0.995f);
     //    return true;
 }
 
@@ -72,7 +73,7 @@ float depthTextureRadius(sampler2D sampler, vec2 uv, vec2 projectorOneTexel, int
     int count = 0;
     for (int x = -radius; x <= radius; x++) {
         for (int y = -radius; y <= radius; y++) {
-            total += texture(sampler, uv + projectorOneTexel * vec2(x, y)).r;
+            total += texture(sampler, uv + projectorOneTexel * vec2(x, y) * 1f).r;
             count++;
         }
     }
@@ -89,11 +90,12 @@ float getAverageStrengthOfRadius(vec3 pos, int radius, float uncertainty) {
 
                 vec2 projectorUV = toProjectorDepthSpace(samplePos);
 
-                float projectorDepth = depthTextureRadius(ProjectionDepthSampler, projectorUV, projectorOneTexel, 1);
+                float projectorDepth = depthTextureRadius(ProjectionDepthSampler, projectorUV, projectorOneTexel, 0);
                 float currentDepth = toDepthInProjectorDepthSpace(samplePos);
+//                float uncertainty =  0.0001f;
 
                 if (currentDepth - projectorDepth < uncertainty)
-                    total += 1f;
+                    total += max(abs(currentDepth - projectorDepth) / uncertainty, 1f);
                 count++;
             }
         }
@@ -102,8 +104,15 @@ float getAverageStrengthOfRadius(vec3 pos, int radius, float uncertainty) {
     return total / count;
 }
 
+uniform int isFirstLayer;
+
 void main() {
-    vec4 original = texture(DiffuseSampler0, texCoord);
+    vec4 original = vec4(0);
+
+//    if (isFirstLayer == 0) {
+//        original = texture(ProjectionResults, texCoord);
+//    }
+
     float depth = texture(DiffuseDepthSampler, texCoord).r;
 
     vec3 pos = viewToWorldSpace(viewPosFromDepth(depth, texCoord));
@@ -112,17 +121,20 @@ void main() {
 
     if (isInProjectionSpace(projectorSpace) && dot(direction, normalize(pos - origin)) > 0.0f) {
         float distanceFromOrigin = length(pos - origin);
-        float uncertainty = 0.0001f / distanceFromOrigin;
+        float uncertainty = 0.001f / distanceFromOrigin;
 
-        float strength = getAverageStrengthOfRadius(pos, 2, uncertainty) * 2f * (inversesqrt(distanceFromOrigin));
+        float strength = getAverageStrengthOfRadius(pos, 1, uncertainty) * 2f * (inversesqrt(distanceFromOrigin));
+
+//        float currentDarkness = 1f/length(original);
 
         strength = strength * 100;
         strength = min(strength, 50);
 
         if (strength > 0f)
-            fragColor = original + (original * vec4(0.04f, 0.02f, 0.1f, 1.0f) * strength);
+            fragColor = max(original, original + (0.1f * vec4(0.04f, 0.02f, 0.1f, 1.0f) * strength));
         else
             fragColor = original;
+//        fragColor = texture(ProjectionDepthSampler, projectorSpace) / 2f;
     } else {
         fragColor = original;
     }

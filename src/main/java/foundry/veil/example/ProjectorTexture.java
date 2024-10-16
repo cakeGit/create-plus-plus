@@ -50,10 +50,13 @@ public class ProjectorTexture extends AbstractTexture {
         }
         RenderSystem.bindTexture(id);
         fbo.bindRead();
-        glBindFramebuffer(GL_FRAMEBUFFER, fbo.getId());
+//        glBindFramebuffer(GL_FRAMEBUFFER, fbo.getId());
         glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,0, 0, width, height, 0);
 //        AdvancedFbo.unbind();
         glGenerateMipmap(GL_TEXTURE_2D);
+//        AdvancedFbo.unbind();
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+        RenderSystem.bindTexture(0);
 
 //        glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo.getId());
 //        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, id);

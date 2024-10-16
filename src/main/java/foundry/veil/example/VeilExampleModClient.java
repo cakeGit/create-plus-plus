@@ -2,98 +2,87 @@ package foundry.veil.example;
 
 import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.PoseStack;
 import foundry.veil.api.client.render.VeilLevelPerspectiveRenderer;
 import foundry.veil.api.client.render.VeilRenderSystem;
 import foundry.veil.api.client.render.framebuffer.AdvancedFbo;
 import foundry.veil.api.client.render.framebuffer.FramebufferManager;
+import foundry.veil.api.client.render.framebuffer.VeilFramebuffers;
 import foundry.veil.api.client.render.shader.program.ShaderProgram;
-import foundry.veil.api.event.VeilRenderLevelStageEvent;
-import foundry.veil.example.client.render.SimpleBlockItemRenderer;
 import foundry.veil.example.editor.VeilExampleModEditor;
-import foundry.veil.example.registry.VeilExampleBlocks;
-import foundry.veil.fabric.event.FabricVeilRenderLevelStageEvent;
 import foundry.veil.fabric.event.FabricVeilRendererEvent;
 import foundry.veil.platform.VeilEventPlatform;
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.LevelRenderer;
-import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
-import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
 import org.joml.*;
 
 import java.lang.Math;
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.lwjgl.opengl.GL11C.*;
+import static org.lwjgl.opengl.GL30C.GL_COLOR_ATTACHMENT0;
 
 public class VeilExampleModClient implements ClientModInitializer {
     
-    private static final ResourceLocation PROJECTION_DEPTH = VeilExampleMod.path("projection_depth");
+    private static final ResourceLocation PROJECTOR_RESULTS = VeilExampleMod.path("projector_results");
+    private static final ResourceLocation PROJECTION_DEPTH = VeilExampleMod.path("projector_depth");
+    private static final ResourceLocation PROJECTOR_RESULTS_PREVIOUS = VeilExampleMod.path("projector_results_previous");
     
     private static final Matrix4f RENDER_MODELVIEW = new Matrix4f();
     private static final Matrix4f RENDER_PROJECTION = new Matrix4f();
     private static final Quaternionf VIEW = new Quaternionf();
     private static final Vector4f OBLIQUE_PLANE = new Vector4f();
-    private static final Matrix4f TRANSFORM = new Matrix4f();
     
     private static ProjectorTexture PROJECTOR_TEXTURE;
     
-    private static Matrix4f lastProj = new Matrix4f();
+    private static final List<Vec3> skibbidiprojector3 = new ArrayList<>();
+    private static final List<ProjectorTexture> skibbidiprojector45 = new ArrayList<>();
     
     @Override
     public void onInitializeClient() {
-//        BlockEntityRenderers.register(VeilExampleBlocks.PROJECTOR_BE, ProjectorBlockEntityRenderer::new);
         FabricVeilRendererEvent.EVENT.register(renderer -> {
             renderer.getEditorManager().add(new VeilExampleModEditor());
-            VeilRenderSystem.renderer().getPostProcessingManager().add(VeilExampleMod.path("projector"));
             VeilRenderSystem.renderer().getPostProcessingManager().add(VeilExampleMod.path("projector_flare"));
             PROJECTOR_TEXTURE = new ProjectorTexture();
+            skibbidiprojector45.add(new ProjectorTexture());
+            skibbidiprojector45.add(new ProjectorTexture());
         });
-        
-        FabricVeilRenderLevelStageEvent.EVENT.register((stage, levelRenderer, bufferSource, poseStack, projectionMatrix, renderTick, partialTicks, camera, frustum) -> {
-            lastProj = projectionMatrix;
-            if (stage == VeilRenderLevelStageEvent.Stage.AFTER_LEVEL) {
-            
-            }
-        });
-        
-        VeilEventPlatform.INSTANCE.preVeilPostProcessing(((name, pipeline, context) -> {
-            if (!name.equals(VeilExampleMod.path("projector"))) return;
-
-            ShaderProgram program = context.getShader(VeilExampleMod.path("projector"));
-            if (program == null) return;
-            program.setVector("origin", 0f, 0f, 0f);
-            program.setVector("direction", 0f, -1f, 0f);
-            Window window = Minecraft.getInstance().getWindow();
-            program.setFloat("BaseAspect", (float) window.getWidth() / window.getHeight());
-
-
-            PoseStack poseStack = new PoseStack();
-
-            Vector3f dir = new Vector3f(0f, -1f, 0f);
-            Vector3f up = new Vector3f(0f, 0f, 1f);
-            
-            Matrix4f pose = poseStack.last().pose();
-            poseStack.mulPoseMatrix(RENDER_PROJECTION);
-            pose.normal().mul(TRANSFORM.normal(new Matrix4f()));
-            poseStack.mulPose(VIEW.identity().lookAlong(dir, up));
-
-//            Matrix4f pose = poseStack.last().pose();
-            program.setMatrix("DepthMat", new Matrix4f().setPerspective((float) (Math.PI / 2f), 1f, 0.1F, 64f).rotate(VIEW.identity().lookAlong(dir, up)));
-            program.setMatrix("DepthModelMat", RENDER_MODELVIEW);
-            
-            program.setFloat("ProjectorPlaneNear", 0.1f);
-            program.setFloat("ProjectorPlaneFar", 64f);
-
-            program.setVector("projectorOneTexel", 2/1024f, 2/1024f);
-            
-            program.addSampler("ProjectionDepthSampler", PROJECTOR_TEXTURE.getId());
-        }));
-        
         
         VeilEventPlatform.INSTANCE.preVeilPostProcessing(((name, pipeline, context) -> {
             if (!name.equals(VeilExampleMod.path("projector_flare"))) return;
+            
+            ShaderProgram shader = VeilRenderSystem.setShader(VeilExampleMod.path("projector"));
+            FramebufferManager framebufferManager = VeilRenderSystem.renderer().getFramebufferManager();
+            AdvancedFbo in = framebufferManager.getFramebuffer(VeilFramebuffers.POST);
+            AdvancedFbo out = framebufferManager.getFramebuffer(PROJECTOR_RESULTS);
+            AdvancedFbo resultsPrevious = framebufferManager.getFramebuffer(PROJECTOR_RESULTS_PREVIOUS);
+            
+            
+            for (Vec3 skibbidiprojectorfour : skibbidiprojector3) {
+                int index = skibbidiprojector3.indexOf(skibbidiprojectorfour);
+
+                if (index == 0) continue;
+                
+                shader.setup();
+                shader.bind();
+                shader.applyRenderSystem();
+                shader.addRenderSystemTextures();
+                setRenderDataForProjector(shader, skibbidiprojectorfour, index);
+                context.applySamplers(shader);
+                shader.applyShaderSamplers(context, 0);
+                shader.setFramebufferSamplers(in);
+                out.bind(true);
+                context.drawScreenQuad();
+                AdvancedFbo.unbind();
+                RenderSystem.colorMask(true, true, true, true);
+                RenderSystem.depthFunc(GL_ALWAYS);
+                RenderSystem.depthMask(false);
+                
+                out.resolveToAdvancedFbo(resultsPrevious);
+
+            }
             
             ShaderProgram program = context.getShader(VeilExampleMod.path("projector_flare"));
             if (program == null) return;
@@ -101,6 +90,34 @@ public class VeilExampleModClient implements ClientModInitializer {
             Window window = Minecraft.getInstance().getWindow();
             program.setFloat("aspect", (float) window.getWidth() / window.getHeight());
         }));
+    }
+    
+    private void setRenderDataForProjector(ShaderProgram shader, Vec3 skibbidiprojectorfour, int index) {
+        
+        shader.setInt("isFirstLayer", index == 0 ? 1 : 0);
+        
+        shader.setVector("origin",
+            (float) skibbidiprojectorfour.x,
+            (float) skibbidiprojectorfour.y,
+            (float) skibbidiprojectorfour.z);
+        shader.setVector("direction", 0f, -1f, 0f);
+        Window window = Minecraft.getInstance().getWindow();
+        shader.setFloat("BaseAspect", (float) window.getWidth() / window.getHeight());
+        
+        Vector3f dir = new Vector3f(0f, -1f, 0f);
+        Vector3f up = new Vector3f(0f, 0f, 1f);
+        shader.setMatrix("DepthMat", new Matrix4f().setPerspective((float) (Math.PI / 2f), 1f, 0.1F, 64f).rotate(VIEW.identity().lookAlong(dir, up)));
+        
+        shader.setFloat("ProjectorPlaneNear", 0.1f);
+        shader.setFloat("ProjectorPlaneFar", 64f);
+        
+        shader.setVector("projectorOneTexel", 2 / 1024f, 2 / 1024f);
+        
+        shader.addSampler("ProjectionDepthSampler", skibbidiprojector45.get(index).getId());
+        FramebufferManager framebufferManager = VeilRenderSystem.renderer().getFramebufferManager();
+        
+        AdvancedFbo projector_results_fbo = framebufferManager.getFramebuffer(PROJECTOR_RESULTS_PREVIOUS);
+        shader.addSampler("ProjectionResults", projector_results_fbo.getColorTextureAttachment(0).getId());
     }
     
     public static void calculateObliqueMatrix(Matrix4fc projection, Vector4fc c, Matrix4f store) {
@@ -122,32 +139,59 @@ public class VeilExampleModClient implements ClientModInitializer {
         AdvancedFbo fbo = framebufferManager.getFramebuffer(PROJECTION_DEPTH);
         
         if (fbo == null) return;
-        
-        Window window = Minecraft.getInstance().getWindow();
-        float aspect = (float) window.getWidth() / window.getHeight();
-        
-        Vector3f dir = new Vector3f(0f, -1f, 0f);
-        Vector3f up = new Vector3f(0f, 0f, 1f);
-        
-        RENDER_PROJECTION.setPerspective((float) (Math.PI / 2f), 1f, 0.1F, 64f);
+        for (Vec3 sdafjnjksdfgjlsdfgjklklhjdfgkljs : skibbidiprojector3) {
+//            fbo.bindDraw(true);
+//            fbo.clear();
+//            AdvancedFbo.unbind();
+//            if (skibbidiprojector3.indexOf(sdafjnjksdfgjlsdfgjklklhjdfgkljs) == 0) continue;
+//
+            int index = skibbidiprojector3.indexOf(sdafjnjksdfgjlsdfgjklklhjdfgkljs);
+            
+//            Window window = Minecraft.getInstance().getWindow();
+//            float aspect = (float) window.getWidth() / window.getHeight();
+            
+            Vector3f dir = new Vector3f(0f, -1f, 0f);
+            Vector3f up = new Vector3f(0f, 0f, 1f);
+            
+            RENDER_PROJECTION.identity().setPerspective((float) (Math.PI / 2f), 1f, 0.1F, 256f);
 //        RENDER_PROJECTION.identity().ortho(-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 128.0f);
-        Vector4f plane = new Vector4f(dir.x(), dir.y(), dir.z(), -dir.dot(dir.x(), dir.y(), dir.z()));
-        
-        new Quaternionf().lookAlong(dir, up).transform(plane);
+//            Vector4f plane = new Vector4f(dir.x(), dir.y(), dir.z(), -dir.dot(dir.x(), dir.y(), dir.z()));
+//
+//            new Quaternionf().identity().lookAlong(dir, up).transform(plane);
 //        calculateObliqueMatrix(RENDER_PROJECTION, plane, RENDER_PROJECTION);
+            RENDER_MODELVIEW.identity();
+            VeilLevelPerspectiveRenderer.render(
+                fbo,
+                RENDER_MODELVIEW,
+                RENDER_PROJECTION,
+                new Vector3d(sdafjnjksdfgjlsdfgjklklhjdfgkljs.x, sdafjnjksdfgjlsdfgjklklhjdfgkljs.y, sdafjnjksdfgjlsdfgjklklhjdfgkljs.z),
+                VIEW.identity().lookAlong(dir, up),
+                256f,
+                partialTicks
+            );
+            
+            skibbidiprojector45.get(index).copy(fbo);
+//            RenderSystem.clearColor(0.0F, 0.0F, 0.0F, 0.0F);
+//            fbo.bindDraw(true);
+//            glClear(GL_DEPTH_BUFFER_BIT);
+//            AdvancedFbo.unbind();
+        }
         
-        VeilLevelPerspectiveRenderer.render(
-            fbo,
-            RENDER_MODELVIEW,
-            RENDER_PROJECTION,
-            new Vector3d(0, 0, 0),
-            VIEW.identity().lookAlong(dir, up),
-            64.0F,
-            partialTicks
-        );
         
-        PROJECTOR_TEXTURE.copy(fbo);
+        
     }
     
+    static {
+        //{
+        //      "type": "veil:blit",
+        //      "shader": "veil-example-mod:projector_blur",
+        //      "in": "veil-example-mod:projector_results",
+        //      "out": "veil:post"
+        //    },
+        
+//        skibbidiprojector3.add(new Vec3(20, 20, 0));
+        skibbidiprojector3.add(new Vec3(0, 0, 0));
+        
+    }
     
 }

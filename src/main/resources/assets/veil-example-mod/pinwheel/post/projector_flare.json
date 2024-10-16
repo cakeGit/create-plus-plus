@@ -7,17 +7,11 @@
   },
   "stages": [
     {
-      "type": "veil:copy",
-      "in": "veil:post",
-      "out": "temp",
-      "depth": true
-    },
-    {
       "type": "veil:blit",
-      "shader": "veil-example-mod:projector_flare",
-      "in": "temp",
+      "shader": "veil-example-mod:projector_blur",
+      "in": "veil-example-mod:projector_results",
       "out": "veil:post"
     }
   ],
-  "priority": 1010
+  "priority": 1000
 }

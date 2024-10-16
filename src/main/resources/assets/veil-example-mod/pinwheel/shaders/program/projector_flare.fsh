@@ -24,7 +24,7 @@ vec2 aspectScale() {
 
 void main() {
     vec4 original = texture(DiffuseSampler0, texCoord);
-    fragColor = original;
+    fragColor = original + vec4(0.1f);
 //
 //    vec2 originProjected = projectToScreenTex(origin);
 //
