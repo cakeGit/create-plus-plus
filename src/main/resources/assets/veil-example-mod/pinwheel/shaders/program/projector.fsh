@@ -109,9 +109,9 @@ uniform int isFirstLayer;
 void main() {
     vec4 original = vec4(0);
 
-//    if (isFirstLayer == 0) {
-//        original = texture(ProjectionResults, texCoord);
-//    }
+    if (isFirstLayer == 0) {
+        original = texture(ProjectionResults, texCoord);
+    }
 
     float depth = texture(DiffuseDepthSampler, texCoord).r;
 
@@ -134,7 +134,7 @@ void main() {
             fragColor = max(original, original + (0.1f * vec4(0.04f, 0.02f, 0.1f, 1.0f) * strength));
         else
             fragColor = original;
-//        fragColor = texture(ProjectionDepthSampler, projectorSpace) / 2f;
+//        fragColor = texture(ProjectionDepthSampler, projectorSpace) * 2f;
     } else {
         fragColor = original;
     }

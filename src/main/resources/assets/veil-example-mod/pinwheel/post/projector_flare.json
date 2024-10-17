@@ -10,6 +10,17 @@
       "type": "veil:blit",
       "shader": "veil-example-mod:projector_blur",
       "in": "veil-example-mod:projector_results",
+      "out": "veil-example-mod:projector_final_results"
+    },
+    {
+      "type": "veil:blit",
+      "shader": "veil-example-mod:projector_mix",
+      "in": "veil:post",
+      "out": "temp"
+    },
+    {
+      "type": "veil:copy",
+      "in": "temp",
       "out": "veil:post"
     }
   ],

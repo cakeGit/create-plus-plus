@@ -27,6 +27,7 @@ import static org.lwjgl.opengl.GL30C.GL_COLOR_ATTACHMENT0;
 public class VeilExampleModClient implements ClientModInitializer {
     
     private static final ResourceLocation PROJECTOR_RESULTS = VeilExampleMod.path("projector_results");
+    private static final ResourceLocation PROJECTOR_FINAL_RESULTS = VeilExampleMod.path("projector_final_results");
     private static final ResourceLocation PROJECTION_DEPTH = VeilExampleMod.path("projector_depth");
     private static final ResourceLocation PROJECTOR_RESULTS_PREVIOUS = VeilExampleMod.path("projector_results_previous");
     
@@ -52,7 +53,6 @@ public class VeilExampleModClient implements ClientModInitializer {
         
         VeilEventPlatform.INSTANCE.preVeilPostProcessing(((name, pipeline, context) -> {
             if (!name.equals(VeilExampleMod.path("projector_flare"))) return;
-            
             ShaderProgram shader = VeilRenderSystem.setShader(VeilExampleMod.path("projector"));
             FramebufferManager framebufferManager = VeilRenderSystem.renderer().getFramebufferManager();
             AdvancedFbo in = framebufferManager.getFramebuffer(VeilFramebuffers.POST);
@@ -63,7 +63,7 @@ public class VeilExampleModClient implements ClientModInitializer {
             for (Vec3 skibbidiprojectorfour : skibbidiprojector3) {
                 int index = skibbidiprojector3.indexOf(skibbidiprojectorfour);
 
-                if (index == 0) continue;
+//                if (index == 0) continue;
                 
                 shader.setup();
                 shader.bind();
@@ -84,11 +84,17 @@ public class VeilExampleModClient implements ClientModInitializer {
 
             }
             
-            ShaderProgram program = context.getShader(VeilExampleMod.path("projector_flare"));
-            if (program == null) return;
-            program.setVector("origin", new Vector3f(0, 0, 0));
-            Window window = Minecraft.getInstance().getWindow();
-            program.setFloat("aspect", (float) window.getWidth() / window.getHeight());
+//            ShaderProgram program = context.getShader(VeilExampleMod.path("projector_flare"));
+//            if (program == null) return;
+//            program.setVector("origin", new Vector3f(0, 0, 0));
+//            Window window = Minecraft.getInstance().getWindow();
+//            program.setFloat("aspect", (float) window.getWidth() / window.getHeight());
+            
+            ShaderProgram program_mix = context.getShader(VeilExampleMod.path("projector_mix"));
+            AdvancedFbo projector_results = framebufferManager.getFramebuffer(PROJECTOR_FINAL_RESULTS);
+            if (program_mix != null) {
+                program_mix.addSampler("ProjectorLightSampler", projector_results.getColorTextureAttachment(0).getId());
+            }
         }));
     }
     
@@ -106,7 +112,7 @@ public class VeilExampleModClient implements ClientModInitializer {
         
         Vector3f dir = new Vector3f(0f, -1f, 0f);
         Vector3f up = new Vector3f(0f, 0f, 1f);
-        shader.setMatrix("DepthMat", new Matrix4f().setPerspective((float) (Math.PI / 2f), 1f, 0.1F, 64f).rotate(VIEW.identity().lookAlong(dir, up)));
+        shader.setMatrix("DepthMat", new Matrix4f().setPerspective((float) (Math.PI / 2f), 1f, 0.1F, 256f).rotate(VIEW.identity().lookAlong(dir, up)));
         
         shader.setFloat("ProjectorPlaneNear", 0.1f);
         shader.setFloat("ProjectorPlaneFar", 64f);
@@ -116,7 +122,7 @@ public class VeilExampleModClient implements ClientModInitializer {
         shader.addSampler("ProjectionDepthSampler", skibbidiprojector45.get(index).getId());
         FramebufferManager framebufferManager = VeilRenderSystem.renderer().getFramebufferManager();
         
-        AdvancedFbo projector_results_fbo = framebufferManager.getFramebuffer(PROJECTOR_RESULTS_PREVIOUS);
+        AdvancedFbo projector_results_fbo = framebufferManager.getFramebuffer(PROJECTOR_RESULTS);
         shader.addSampler("ProjectionResults", projector_results_fbo.getColorTextureAttachment(0).getId());
     }
     
@@ -140,9 +146,9 @@ public class VeilExampleModClient implements ClientModInitializer {
         
         if (fbo == null) return;
         for (Vec3 sdafjnjksdfgjlsdfgjklklhjdfgkljs : skibbidiprojector3) {
-//            fbo.bindDraw(true);
-//            fbo.clear();
-//            AdvancedFbo.unbind();
+            fbo.bindDraw(true);
+            fbo.clear();
+            AdvancedFbo.unbind();
 //            if (skibbidiprojector3.indexOf(sdafjnjksdfgjlsdfgjklklhjdfgkljs) == 0) continue;
 //
             int index = skibbidiprojector3.indexOf(sdafjnjksdfgjlsdfgjklklhjdfgkljs);
@@ -189,7 +195,7 @@ public class VeilExampleModClient implements ClientModInitializer {
         //      "out": "veil:post"
         //    },
         
-//        skibbidiprojector3.add(new Vec3(20, 20, 0));
+        skibbidiprojector3.add(new Vec3(20, 20, 0));
         skibbidiprojector3.add(new Vec3(0, 0, 0));
         
     }
